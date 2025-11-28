@@ -1,0 +1,152 @@
+.content {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: calc(100vh - 200px);
+  padding: 20px;
+  padding-top: 40px;
+  padding-bottom: 40px;
+}
+
+.picture {
+  position: relative;
+  width: 220px;
+  height: 220px;
+  padding: 10px;
+  display: grid;
+  place-items: center;
+  background: linear-gradient(45deg, #0043fc, #ffffff);
+  box-sizing: content-box;
+}
+
+.picture::after {
+  content: "";
+  position: absolute;
+  top: 5px;
+  left: 5px;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: transparent;
+  box-shadow:
+    0 20px #efa001, 0 65px #efa001, 0 110px #efa001, 0 155px #efa001, 0 200px #efa001,
+    20px 0 #efa001, 65px 0 #efa001, 110px 0 #efa001, 155px 0 #efa001, 200px 0 #efa001,
+    220px 20px #efa001, 220px 65px #efa001, 220px 110px #efa001, 220px 155px #efa001, 220px 200px #efa001,
+    20px 220px #efa001, 65px 220px #efa001, 110px 220px #efa001, 155px 220px #efa001, 200px 220px #efa001;
+}
+
+.scene {
+  width: 200px;
+  height: 200px;
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: linear-gradient(175deg, #1c3aa9, #dee5ff);
+  overflow: hidden;
+}
+
+.sky {
+  position: absolute;
+  top: -6px;
+  left: 28px;
+}
+
+.cloud {
+  position: absolute;
+  width: 90px;
+  height: 45px;
+  border-radius: 100px / 50px;
+  background: radial-gradient(circle at 70% 60%, #fff, #2044c7);
+}
+
+.bee {
+  position: absolute;
+  top: 72px;
+  left: 90px;
+  width: 64px;
+  height: 38px;
+}
+
+.bee-body {
+  position: absolute;
+  width: 45px;
+  height: 15px;
+  background: #dabc24;
+  border: 2px solid #8a7916;
+  border-radius: 100px / 50px;
+  z-index: 1;
+}
+
+.bee-head {
+  position: absolute;
+  width: 15px;
+  height: 15px;
+  top: 15px;
+  left: -6px;
+  background: #dabc24;
+  border: 2px solid #8a7916;
+  border-radius: 50%;
+  z-index: 2;
+}
+
+.bee-eye {
+  position: absolute;
+  width: 6px;
+  height: 6px;
+  background: #000;
+  border-radius: 50%;
+  z-index: 3;
+}
+
+.bee-wing {
+  position: absolute;
+  width: 35px;
+  height: 13px;
+  background: #4c5ddd;
+  border: 2px solid #25318c;
+  border-radius: 100px / 50px;
+}
+
+.mushroom {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  z-index: 2;
+}
+
+.mushroom-body {
+  width: 30px;
+  height: 80px;
+  background: #cab89a;
+  border: 3px solid #42312a;
+  border-radius: 50%;
+}
+
+.mushroom-head {
+  width: 90px;
+  height: 45px;
+  margin-bottom: -25px;
+  background: radial-gradient(circle at 65% 40%, #8e7565, #322522);
+  border-radius: 50% 50% 50% 50% / 100% 100% 0 0;
+  z-index: 2;
+}
+
+.grass {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  z-index: 3;
+}
+
+.line {
+  width: 100px;
+  height: 40px;
+  margin-left: -5px;
+  background: repeating-linear-gradient(135deg, #0ef329, #0ef329 4px, #086020 4px, #086020 8px);
+  clip-path: polygon(50% 0%, 0% 100%, 100% 100%);
+}
+
