@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Задание 4 — Градов А.Л.</title>
+    <link rel="stylesheet" href="../header-footer.css">
+    <link rel="stylesheet" href="style.css">
+    <style>
+        body {
+            padding-top: 60px;
+        }
+
+        .task-content {
+            background: #f7f7f7;
+            padding: 2rem;
+            min-height: calc(100vh - 140px);
+        }
+
+        .app {
+            max-width: 1200px;
+            margin: auto;
+        }
+    </style>
+</head>
+
+<body>
+    <header>
+        <a class="logo" href="../../index.html">
+            <div class="logo-icon">
+                <div class="f">F</div>
+            </div>
+            <div class="logo-text">FilmFlix</div>
+        </a>
+        <nav>
+            <ul>
+                <li><a href="../../index.html">Главная</a></li>
+                <li class="tasks"><a href="#" onclick="return false;">Задания</a>
+                    <ul>
+                        <li><a href="../task1/index.html">Задание 1</a></li>
+                        <li><a href="../task2/index.html">Задание 2</a></li>
+                        <li><a href="../task3/index.html">Задание 3</a></li>
+                        <li><a href="index.html">Задание 4</a></li>
+                    </ul>
+                </li>
+            </ul>
+        </nav>
+    </header>
+
+    <main class="task-content">
+        <div class="app">
+
+            <section class="board board-top">
+                <div id="zoneTop" class="chip-container top-zone" data-zone="top"></div>
+            </section>
+
+            <section class="bottom-boards">
+                <div class="board board-left">
+                    <div id="zoneLeft" class="chip-container left-zone" data-zone="left"></div>
+                </div>
+
+                <div class="board board-right">
+                    <div class="input-section">
+                        <input type="text" id="sourceText">
+                        <button id="parseButton">Разобрать</button>
+                    </div>
+
+                    <div id="resultWords" class="words-display"></div>
+                </div>
+            </section>
+
+        </div>
+    </main>
+
+    <footer>
+        © 2025 Градов Александр
+    </footer>
+
+    <template id="chipTpl">
+        <div class="chip" draggable="true">
+            <span class="chip-key"></span>
+            <span class="chip-value"></span>
+        </div>
+    </template>
+
+    <script src="script.js"></script>
+</body>
+
+</html>
