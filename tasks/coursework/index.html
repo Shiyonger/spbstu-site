@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Куклы — игра</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div id="app" class="page splash">
+    <!-- SPLASH -->
+    <section id="splash" class="screen active">
+      <h1>🧥 Куклы — стилист</h1>
+      <p class="lead">Одевай кукол по заданию и зарабатывай очки! Показывай свой вкус в моде и поднимайся в рейтинге.</p>
+      <label>Введите ваше имя
+        <input id="playerName" placeholder="Ваше имя" />
+      </label>
+      <div class="row">
+        <button id="startBtn">Начать игру</button>
+        <button id="scoreBtn">Лучшие результаты</button>
+      </div>
+    </section>
+
+    <!-- GAME -->
+    <section id="game" class="screen">
+      <header class="game-header">
+        <div>Игрок: <span id="nameDisplay"></span></div>
+        <div>Уровень: <span id="levelDisplay">1</span></div>
+        <div>Таймер: <span id="timerDisplay">00:00</span></div>
+        <div>Очки: <span id="scoreDisplay">0</span></div>
+      </header>
+
+      <main class="game-area">
+        <aside class="panel">
+          <div class="task-box">
+            <h3>Задание</h3>
+            <div id="taskText">—</div>
+          </div>
+
+          <div class="controls">
+            <button id="restartLevel">Завершить уровень</button>
+            <button id="savePNG">Сохранить образ (PNG)</button>
+            <button id="quitToMenu">Выйти в меню</button>
+          </div>
+        </aside>
+
+        <section class="playground">
+          <div id="dollsArea" class="dolls-area">
+            <!-- dolls rendered here -->
+          </div>
+          <div id="clothesArea" class="clothes-area" aria-label="Одежда">
+            <!-- clothes rendered here -->
+          </div>
+        </section>
+      </main>
+    </section>
+
+    <!-- SCOREBOARD -->
+    <section id="scoreboard" class="screen">
+      <h2>Рейтинг</h2>
+      <div id="scoresList"></div>
+      <div class="row">
+        <button id="backToMenu">Назад</button>
+        <button id="clearScores">Очистить рейтинг</button>
+      </div>
+    </section>
+
+    <footer class="footer">
+      <small>Градов А.Л.</small>
+    </footer>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

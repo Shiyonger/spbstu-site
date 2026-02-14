@@ -1,3 +1,5 @@
+// -             --Баа - 2f - аа - --    Ffff - Ва - 5 - dd - k6-**-1 - ау - Аааа - 3 - hh - Ббб - 4
+
 const ui = {
     input: document.getElementById('sourceText'),
     button: document.getElementById('parseButton'),
@@ -28,10 +30,19 @@ function parseInput() {
     const upper = [];
     const nums = [];
 
+    const symbols = ['@', '*'];
+
     parts.forEach(p => {
-        if (!isNaN(p)) nums.push(+p);
-        else if (p[0] === p[0].toUpperCase()) upper.push(p);
-        else lower.push(p);
+        let flag = true;
+        for (let i = 0; i < symbols.length; i++) {
+            if (symbols[i] === p)
+                flag = false;
+        };
+        if (flag) {
+            if (!isNaN(p)) nums.push(+p);
+            else if (p[0] === p[0].toUpperCase()) upper.push(p);
+            else lower.push(p);
+        };
     });
 
     lower.sort();
