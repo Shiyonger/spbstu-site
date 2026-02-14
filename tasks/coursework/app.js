@@ -1,4 +1,3 @@
-// ---- Data ----
 const PLAYER_KEY = 'kukly_player';
 const SCORES_KEY = 'kukly_scores';
 
@@ -12,21 +11,18 @@ const STATE = {
   clothes: [],
   running: false,
   intervalId: null,
-  level3Stage: 1, // 1 = ловля, 2 = одевание
-  level3CaughtClothes: [], // пойманная одежда на уровне 3
-  level3TotalClothes: 0, // общее количество одежды для ловли
-  basketPosition: 0 // позиция корзинки на уровне 3
+  level3Stage: 1,
+  level3CaughtClothes: [],
+  level3TotalClothes: 0,
+  basketPosition: 0
 };
 
-// Каталог кукол и одежды (placeholder SVG файлы в assets)
 const DOLLS = [
   { id: 'd1', file: 'assets/doll2.png', name: 'Кукла 1' },
   { id: 'd2', file: 'assets/doll2.png', name: 'Кукла 2' },
-  { id: 'd3', file: 'assets/doll2.png', name: 'Кукла 3' } // используем первую куклу для третьей
+  { id: 'd3', file: 'assets/doll2.png', name: 'Кукла 3' }
 ];
 
-// clothes metadata: id, file, type, season, color, style
-// types: hat, top, bottom, dress, shoes, outer
 const CLOTHES = [
   // Зима
   {id:'c1',file:'assets/clothes/winter_blue_outer.png',type:'outer',season:'winter',color:'blue',style:'classic',top:'13%',left:'24.5%',width:'50%',height:'45%'},
@@ -53,13 +49,11 @@ const CLOTHES = [
   {id:'c13',file:'assets/clothes/summer_pink_shoes.png',type:'shoes',season:'summer',color:'brown',style:'casual',top:'84%',left:'36%',width:'30%',height:'13%'},
 ];
 
-// ---- Utils ----
 function $(sel) { return document.querySelector(sel) }
 function $all(sel){ return Array.from(document.querySelectorAll(sel)) }
 function randChoice(arr){ return arr[Math.floor(Math.random()*arr.length)] }
 function formatTime(s){ const m = Math.floor(s/60); const ss = s%60; return `${String(m).padStart(2,'0')}:${String(ss).padStart(2,'0')}` }
 
-// ---- UI elements ----
 const splash = $('#splash');
 const game = $('#game');
 const scoreboard = $('#scoreboard');
@@ -81,7 +75,6 @@ const scoresList = $('#scoresList');
 const backToMenu = $('#backToMenu');
 const clearScores = $('#clearScores');
 
-// ---- Init ----
 function init(){
   const stored = localStorage.getItem(PLAYER_KEY);
   if(stored){ playerNameInput.value = stored }
@@ -90,7 +83,6 @@ function init(){
 }
 init();
 
-// ---- Handlers ----
 startBtn.addEventListener('click', ()=>{
   const name = playerNameInput.value.trim() || 'Игрок';
   STATE.player = name;
@@ -100,7 +92,6 @@ startBtn.addEventListener('click', ()=>{
 scoreBtn.addEventListener('click', ()=> showScreen('scoreboard'));
 
 restartLevelBtn.addEventListener('click', ()=> {
-  // treat as skip (can be used to finish level early)
   finishLevel(false);
 });
 quitToMenuBtn.addEventListener('click', ()=> {
@@ -113,7 +104,6 @@ clearScores.addEventListener('click', ()=> { localStorage.removeItem(SCORES_KEY)
 
 savePNGBtn.addEventListener('click', saveCompositionAsPNG);
 
-// context menu for clothes (level 2)
 clothesArea.addEventListener('contextmenu', (e)=>{
   e.preventDefault();
   const target = e.target.closest('.cloth');
@@ -122,33 +112,19 @@ clothesArea.addEventListener('contextmenu', (e)=>{
   showContextMenu(e.pageX, e.pageY, id);
 });
 
-// double click to wear - отключено на уровне 2, только drag and drop
-// clothesArea.addEventListener('dblclick', (e)=>{
-//   const target = e.target.closest('.cloth');
-//   if(!target) return;
-//   const id = target.dataset.id;
-//   if(STATE.level === 2) {
-//     wearCloth(id);
-//   }
-// });
-
-// double click to remove (level 2) - на одежде на кукле
 dollsArea.addEventListener('dblclick', (e)=>{
   if(STATE.level !== 2) return;
   
-  // Проверяем был ли клик на изображении одежды
   let clothImg = e.target.closest('img[data-cloth-id]');
   let doll = null;
   let clothToRemove = null;
   
   if(clothImg) {
-    // Клик был на конкретной одежде - удаляем её
     const clothId = clothImg.dataset.clothId;
     const dollEl = clothImg.closest('.doll');
     if(dollEl) {
       doll = STATE.dolls.find(x=>x.el===dollEl);
       if(doll) {
-        // Находим эту одежду в массиве worn
         const wornIndex = doll.worn.findIndex(w => w.id === clothId);
         if(wornIndex >= 0) {
           clothToRemove = doll.worn[wornIndex];
@@ -156,7 +132,6 @@ dollsArea.addEventListener('dblclick', (e)=>{
       }
     }
   } else {
-    // Клик был на куклу, но не на конкретную одежду - удаляем последнюю
     const target = e.target.closest('.doll');
     if(target) {
       doll = STATE.dolls.find(x=>x.el===target);
@@ -167,14 +142,11 @@ dollsArea.addEventListener('dblclick', (e)=>{
   }
   
   if(doll && clothToRemove) {
-    // Находим индекс одежды
     const removeIndex = doll.worn.indexOf(clothToRemove);
     if(removeIndex >= 0) {
-      // Удаляем одежду ИЗ МАССИВА и перерисовываем куклу СРАЗУ
       doll.worn.splice(removeIndex, 1);
       redrawDollClothes(doll);
       
-      // Теперь ищем элемент для анимации
       const layerForType = (type) => {
         if(type === 'hat') return doll.el.querySelector('[data-layer="hat"]');
         if(type === 'top' || type === 'outer' || type === 'dress') return doll.el.querySelector('[data-layer="top"]');
@@ -189,8 +161,6 @@ dollsArea.addEventListener('dblclick', (e)=>{
         const layerRect = targetLayer.getBoundingClientRect();
         const clothesAreaRect = clothesArea.getBoundingClientRect();
         
-        // Создаем клон изображения одежды для анимации
-        // Используем исходный IMG элемент (которое мы уже удалили из DOM, но можем создать новый)
         const clone = document.createElement('img');
         clone.src = clothToRemove.file || 'assets/skirt.png';
         clone.style.position = 'fixed';
@@ -226,7 +196,6 @@ dollsArea.addEventListener('dblclick', (e)=>{
   }
 });
 
-// ---- Screens ----
 function showScreen(name){
   $all('.screen').forEach(s=>s.classList.remove('active'));
   if(name==='splash') splash.classList.add('active');
@@ -234,7 +203,6 @@ function showScreen(name){
   if(name==='scoreboard') scoreboard.classList.add('active');
 }
 
-// ---- Game flow ----
 function startGame(){
   STATE.level = 1;
   STATE.score = 0;
@@ -252,7 +220,6 @@ function nextLevel(){
 }
 
 function setupLevel(level){
-  // reset - очищаем все механики предыдущего уровня
   disableFallingClothes();
   disableKeyboardControls();
   
@@ -265,36 +232,30 @@ function setupLevel(level){
   STATE.level3TotalClothes = 0;
   STATE.basketPosition = 50;
   
-  // очищаем области
   dollsArea.innerHTML = '';
   clothesArea.innerHTML = '';
   
-  // удаляем корзинку если есть
   const basket = document.querySelector('.basket');
   if(basket) basket.remove();
 
-  // Показываем описание уровня
   showLevelDescription(level);
   
-  // level params
   if(level===1){
     STATE.timer = 90;
     generateTask({seasonOnly:true});
     renderDolls(1);
-    renderClothes(8, false, true); // гарантируем правильную одежду
+    renderClothes(8, false, true);
     enableDragAndDrop();
   } else if(level===2){
     STATE.timer = 60;
     generateTask({seasonColor:true});
-    renderDolls(2); // две куклы на втором уровне
+    renderDolls(2);
     
-    let selectedClothes = []; // итоговый список одежды для уровня
-    const selectedIds = new Set(); // для отслеживания выбранной одежды
+    let selectedClothes = [];
+    const selectedIds = new Set();
     const types = ['hat', 'top', 'bottom', 'shoes'];
     
-    // ШАГ 1: Для каждого типа одежды берём 1-2 предмета для каждой куклы
     types.forEach(type => {
-      // Для первой куклы
       if(STATE.task && STATE.task.parts && STATE.task.parts[0]) {
         const taskPart = STATE.task.parts[0];
         console.log(taskPart);
@@ -306,7 +267,6 @@ function setupLevel(level){
         );
         clothesOfType.forEach(c => console.log(c));
         
-        // Берём 1-2 предмета из доступных
         const count = Math.random() < 0.5 ? 1 : 2;
         const toAdd = clothesOfType.slice(0, Math.min(count, clothesOfType.length));
         toAdd.forEach(cloth => {
@@ -315,7 +275,6 @@ function setupLevel(level){
         });
       }
       
-      // Для второй куклы
       if(STATE.task && STATE.task.parts && STATE.task.parts[1]) {
         const taskPart = STATE.task.parts[1];
         console.log(taskPart);
@@ -326,7 +285,6 @@ function setupLevel(level){
           !selectedIds.has(c.id)
         );
         
-        // Берём 1-2 предмета из доступных
         const count = Math.random() < 0.5 ? 1 : 2;
         const toAdd = clothesOfType.slice(0, Math.min(count, clothesOfType.length));
         toAdd.forEach(cloth => {
@@ -338,7 +296,6 @@ function setupLevel(level){
     
     console.log(selectedClothes.length);
     selectedClothes.forEach(c => console.log(c));
-    // ШАГ 2: Добавляем рандомную одежду которая ещё не была выбрана до 16 предметов
     const remainingClothes = CLOTHES.filter(c => !selectedIds.has(c.id));
     const needed = Math.max(0, 16 - selectedClothes.length);
     const shuffled = remainingClothes.sort(() => Math.random() - 0.5);
@@ -348,10 +305,8 @@ function setupLevel(level){
       selectedIds.add(cloth.id);
     });
     
-    // ШАГ 3: Из полученного списка выбранной одежды выбираем несколько вещей рандомно и надеваем на кукол
     STATE.dolls.forEach((doll, dollIdx) => {
       if(STATE.task && STATE.task.parts && STATE.task.parts[dollIdx]) {
-        // Надеваем хотя бы 1 предмет каждого доступного типа (рандомно из нужной одежды)
         const clothesToWear = [];
         const clothesByType = {
           'hat': selectedClothes.filter(c => c.type === 'hat'),
@@ -360,9 +315,8 @@ function setupLevel(level){
           'shoes': selectedClothes.filter(c => c.type === 'shoes')
         };
         
-        // Рандомно выбираем из каждого типа (если есть) и надеваем
         Object.keys(clothesByType).forEach(typeKey => {
-          if(clothesByType[typeKey].length > 0 && Math.random() < 0.7) { // 70% шанс надеть каждый тип
+          if(clothesByType[typeKey].length > 0 && Math.random() < 0.7) {
             const cloth = clothesByType[typeKey][Math.floor(Math.random() * clothesByType[typeKey].length)];
             if(!clothesToWear.find(w => w.id === cloth.id)) {
               clothesToWear.push(Object.assign({}, cloth));
@@ -378,7 +332,6 @@ function setupLevel(level){
     STATE.clothes = selectedClothes.sort(() => Math.random() - 0.5);
     renderClothes(Math.min(16, selectedClothes.length));
     
-    // Перерисовываем кукол с надетой одеждой
     STATE.dolls.forEach((doll) => {
       redrawDollClothes(doll);
     });
@@ -386,19 +339,16 @@ function setupLevel(level){
     enableDoubleClickAndContext();
     enableAnimationsForClothes();
   } else if(level===3){
-    STATE.level3Stage = 1; // начинаем с этапа ловли
+    STATE.level3Stage = 1;
     STATE.level3CaughtClothes = [];
-    STATE.level3TotalClothes = 15; // Ровно 15 предметов для ловли
-    STATE.timer = 120; // 2 минуты на этап 2 (одевание), но на этапе 1 таймер не идет
+    STATE.level3TotalClothes = 15;
+    STATE.timer = 120;
     generateTask({multiDoll:true});
-    // На третьем уровне сначала нет кукол, только задание
     renderDolls(0);
-    renderClothes(0); // одежда будет падать
+    renderClothes(0);
     
-    // Расширяем игровую зону на уровне 3
     dollsArea.style.minHeight = '600px';
     
-    // Создаем постоянный счетчик
     const counter = document.createElement('div');
     counter.id = 'level3-counter-permanent';
     counter.style.position = 'absolute';
@@ -415,7 +365,6 @@ function setupLevel(level){
     counter.innerHTML = 'Поймано: 0/15';
     dollsArea.appendChild(counter);
     
-    // Показываем инструкцию для первого этапа
     const instruction = document.createElement('div');
     instruction.id = 'level3-instruction';
     instruction.style.position = 'absolute';
@@ -435,11 +384,9 @@ function setupLevel(level){
       <div style="font-weight:bold;margin-bottom:8px;">Этап 1: Ловля одежды</div>
       <div style="font-size:14px;">Используйте стрелки ← → для управления корзинкой</div>
       <div style="font-size:14px;margin-top:5px;">Поймайте ровно 15 предметов одежды!</div>
-      <div style="font-size:12px;margin-top:8px;color:#ccc;">Времени нет спешить необязательно</div>
     `;
     dollsArea.appendChild(instruction);
     
-    // Автоудаление инструкции через 10 секунд
     setTimeout(() => {
       if(instruction && instruction.parentNode) {
         instruction.style.opacity = '0';
@@ -452,21 +399,17 @@ function setupLevel(level){
       }
     }, 10000);
     
-    STATE.basketPosition = 50; // начальная позиция корзинки в процентах
+    STATE.basketPosition = 50;
     renderBasket();
   }
 
   updateUI();
   levelDisplay.textContent = STATE.level;
   
-  // Показываем описание уровня ПОСЛЕ настройки уровня, но ДО запуска таймера
   showLevelDescription(level);
-  // Таймер запустится после закрытия подсказки в функции showLevelDescription
 }
 
-// ---- Task generation ----
 function generateTask(opts={}){
-  // build simple tasks dynamically
   const seasons = ['winter','summer'];
   const colors = ['red','blue','green','purple','brown'];
   const styles = ['classic','casual','sport'];
@@ -474,7 +417,6 @@ function generateTask(opts={}){
     const s = randChoice(seasons);
     STATE.task = { type:'season', season:s, text:`Одень куклу для ${s}` };
   } else if(opts.seasonColor){
-    // На уровне 2 задание для обеих кукол
     const s1 = randChoice(seasons);
     const c1 = randChoice(colors);
     const s2 = randChoice(seasons);
@@ -484,10 +426,9 @@ function generateTask(opts={}){
       season:s1, 
       color:c1, 
       text:`Кукла 1: ${s1} ${c1} | Кукла 2: ${s2} ${c2}`,
-      parts: [{season:s1, color:c1}, {season:s2, color:c2}] // задание для обеих кукол
+      parts: [{season:s1, color:c1}, {season:s2, color:c2}]
     };
   } else if(opts.multiDoll){
-    // три задачи для трех кукол
     const t1 = randChoice(seasons);
     const c1 = randChoice(colors);
     const t2 = randChoice(seasons);
@@ -508,7 +449,6 @@ function generateTask(opts={}){
 }
 
 function getNeededClothesForLevel3(){
-  // Возвращаем одежду, которая нужна для задания, с привязкой к конкретной кукле
   if(!STATE.task || STATE.task.type !== 'multi') return [];
   const needed = [];
   STATE.task.parts.forEach((part, dollIndex) => {
@@ -516,7 +456,7 @@ function getNeededClothesForLevel3(){
     matching.forEach(cloth => {
       needed.push({
         ...cloth,
-        targetDollIndex: dollIndex, // привязываем к конкретной кукле
+        targetDollIndex: dollIndex,
         targetSeason: part.season,
         targetColor: part.color
       });
@@ -526,13 +466,11 @@ function getNeededClothesForLevel3(){
 }
 
 function getTargetDollIndexForCloth(season, color){
-  // Определяем для какой куклы подходит эта одежда по заданию
   if(!STATE.task || STATE.task.type !== 'multi') return 0;
   const dollIndex = STATE.task.parts.findIndex(part => part.season === season && part.color === color);
   return dollIndex >= 0 ? dollIndex : 0;
 }
 
-// ---- Rendering ----
 function renderDolls(count=1){
   dollsArea.innerHTML = '';
   STATE.dolls = [];
@@ -543,7 +481,6 @@ function renderDolls(count=1){
     wrapper.dataset.slot = `doll-${i}`;
     wrapper.dataset.dollIndex = i;
     
-    // Добавляем подсказку с заданием для куклы
     let taskHint = '';
     if(STATE.level === 3 && STATE.task && STATE.task.type === 'multi' && STATE.task.parts[i]) {
       const part = STATE.task.parts[i];
@@ -562,7 +499,6 @@ function renderDolls(count=1){
       <div class="layer" data-layer="bottom" style="pointer-events:auto;position:absolute;top:50%;left:0;width:100%;height:30%;z-index:12;cursor:pointer;"></div>
       <div class="layer" data-layer="shoes" style="pointer-events:auto;position:absolute;bottom:0;left:0;width:100%;height:25%;z-index:15;cursor:pointer;"></div>
     `;
-    // attach drop listener
     wrapper.addEventListener('dragover', (e)=>e.preventDefault());
     wrapper.addEventListener('drop', (e)=>{
       e.preventDefault();
@@ -572,34 +508,28 @@ function renderDolls(count=1){
     dollsArea.appendChild(wrapper);
     STATE.dolls.push({id:d.id, el:wrapper, worn:[], dollIndex: i, wornIds: new Set(), correctIds: new Set()});
   }
-  // center adjustment
   dollsArea.style.justifyContent = count===1 ? 'center' : count===0 ? 'center' : 'space-around';
 }
 
 function renderClothes(count=6, randomize=false, ensureCorrect=false){
   clothesArea.innerHTML = '';
-  // optionally randomize order and produce copies when randomize true
   let items = STATE.clothes.slice();
   
   if(ensureCorrect && STATE.task) {
-    // Гарантируем наличие правильной одежды для уровня 1
     const correctClothes = CLOTHES.filter(c => {
       if(STATE.task.type === 'season') {
         return c.season === STATE.task.season;
       }
       return false;
     });
-    // Берем всю правильную одежду + добавляем случайную неправильную
     items = correctClothes.slice();
     const wrongClothes = CLOTHES.filter(c => c.season !== STATE.task.season);
     const extraCount = Math.max(0, count - items.length);
     for(let i = 0; i < extraCount; i++) {
       items.push(wrongClothes[Math.floor(Math.random() * wrongClothes.length)]);
     }
-    // Перемешиваем
     items = items.sort(() => Math.random() - 0.5).slice(0, count);
   } else if(randomize) {
-    // clone to have many items including duplicates for falling
     items = [];
     for(let i=0;i<count;i++){
       const c = CLOTHES[Math.floor(Math.random()*CLOTHES.length)];
@@ -612,7 +542,6 @@ function renderClothes(count=6, randomize=false, ensureCorrect=false){
   items.forEach(it=>{
     const card = document.createElement('div');
     card.className = 'cloth';
-    // Отключаем drag на уровне 3 этап 1
     card.draggable = !(STATE.level === 3 && STATE.level3Stage === 1);
     card.dataset.id = it.id;
     card.innerHTML = `
@@ -621,7 +550,6 @@ function renderClothes(count=6, randomize=false, ensureCorrect=false){
         <div style="font-size:11px;color:#888">${it.season} • ${it.color}</div>
       </div>
     `;
-    // embed placeholder image as background if available
     const img = document.createElement('img');
     img.src = it.file;
     img.alt = it.id;
@@ -633,7 +561,6 @@ function renderClothes(count=6, randomize=false, ensureCorrect=false){
     card.style.position = 'relative';
     card.appendChild(img);
 
-    // drag handlers
     card.addEventListener('dragstart', (e)=>{
       e.dataTransfer.setData('text/plain', it.id);
       setTimeout(()=>card.classList.add('dragging'), 10);
@@ -642,15 +569,12 @@ function renderClothes(count=6, randomize=false, ensureCorrect=false){
     clothesArea.appendChild(card);
   });
   
-  // Включаем анимации для всех уровней
   if(STATE.level === 1 || STATE.level === 2 || STATE.level === 3) {
     enableAnimationsForClothes();
   }
 }
 
-// ---- Interactions ----
 function enableDragAndDrop(){
-  // Отключаем drag and drop на уровне 3 этап 1
   if(STATE.level === 3 && STATE.level3Stage === 1) {
     $all('.cloth').forEach(cloth => {
       cloth.draggable = false;
@@ -660,14 +584,11 @@ function enableDragAndDrop(){
     return;
   }
   
-  // already set on render
-  // also provide click to remove when clicking worn items (только на уровне 1)
   if(STATE.level === 1) {
     $all('.doll').forEach(d=>{
       const layer = d.querySelector('[data-layer="clothes"]');
       if(layer) {
         layer.addEventListener('click', ()=>{
-          // remove last worn
           const doll = STATE.dolls.find(x=>x.el===d);
           if(!doll || !doll.worn.length) return;
           doll.worn.pop();
@@ -680,12 +601,9 @@ function enableDragAndDrop(){
 }
 
 function enableDoubleClickAndContext(){
-  // double click handled globally (see above)
-  // context menu shows actions
 }
 
 function showContextMenu(x,y,id){
-  // simple built-in context actions: wear, info, remove
   const menu = document.createElement('div');
   menu.style.position='fixed';menu.style.left=`${x}px`;menu.style.top=`${y}px`;
   menu.style.background='#fff';menu.style.border='1px solid #ddd';menu.style.padding='8px';menu.style.zIndex=9999;borderRadius='6px';
@@ -703,10 +621,8 @@ function showContextMenu(x,y,id){
 }
 
 function wearCloth(id, dollEl=null, instanceId=null){
-  // find item - сначала ищем в пойманной одежде (уровень 3), потом в каталоге
   let cloth = null;
   if(STATE.level === 3 && STATE.level3CaughtClothes.length > 0) {
-    // На уровне 3 ищем по instanceId если передан, иначе по id
     if(instanceId) {
       cloth = STATE.level3CaughtClothes.find(c => c.instanceId === instanceId);
     } else {
@@ -721,17 +637,13 @@ function wearCloth(id, dollEl=null, instanceId=null){
     return;
   }
   
-  // choose doll
   let doll = null;
   if(dollEl) {
     doll = STATE.dolls.find(x=>x.el===dollEl);
   } else if(STATE.level === 3 && STATE.task && STATE.task.type === 'multi') {
-    // На уровне 3 проверяем, подходит ли одежда конкретной кукле
-    // Если одежда имеет targetDollIndex, надеваем только на нужную куклу
     if(cloth.targetDollIndex !== undefined) {
       doll = STATE.dolls[cloth.targetDollIndex];
     } else {
-      // Иначе находим куклу по заданию
       const dollIndex = STATE.dolls.findIndex((d, idx) => {
         const taskPart = STATE.task.parts[idx];
         return taskPart && cloth.season === taskPart.season && cloth.color === taskPart.color;
@@ -739,7 +651,6 @@ function wearCloth(id, dollEl=null, instanceId=null){
       doll = dollIndex >= 0 ? STATE.dolls[dollIndex] : STATE.dolls[0];
     }
   } else {
-    // На уровнях 1 и 2 надеваем на первую куклу или выбранную
     doll = dollEl ? STATE.dolls.find(x=>x.el===dollEl) : STATE.dolls[0];
   }
   
@@ -748,9 +659,7 @@ function wearCloth(id, dollEl=null, instanceId=null){
     return;
   }
   
-  // Проверяем, нет ли уже одежды такого же типа
   const hasSameType = doll.worn.some(wornCloth => {
-    // Проверяем совместимые типы
     const compatibleTypes = {
       'top': ['top', 'outer', 'dress'],
       'outer': ['top', 'outer', 'dress'],
@@ -772,10 +681,8 @@ function wearCloth(id, dollEl=null, instanceId=null){
     return;
   }
   
-  // Создаем копию объекта одежды
   const clothCopy = Object.assign({}, cloth);
   
-  // Анимация одевания - сначала показываем эффект
   const dollRect = doll.el.getBoundingClientRect();
   const clothCard = clothesArea.querySelector(`.cloth[data-id="${id}"]`);
   if(clothCard) {
@@ -784,7 +691,6 @@ function wearCloth(id, dollEl=null, instanceId=null){
       doll.worn.push(clothCopy);
       redrawDollClothes(doll);
       const isCorrect = evaluateAttempt(clothCopy, doll);
-      // Анимация результата
       animateDollResult(doll.el, isCorrect);
     });
   } else {
@@ -794,18 +700,15 @@ function wearCloth(id, dollEl=null, instanceId=null){
     animateDollResult(doll.el, isCorrect);
   }
   
-  // Удаляем одежду из инвентаря на всех уровнях
   if(STATE.level === 1 || STATE.level === 2) {
     removeClothFromInventory(id);
   } else if(STATE.level === 3) {
-    // На уровне 3 удаляем из пойманной одежды по instanceId если есть
     if(instanceId) {
       const index = STATE.level3CaughtClothes.findIndex(c => c.instanceId === instanceId);
       if(index >= 0) {
         STATE.level3CaughtClothes.splice(index, 1);
       }
     } else {
-      // Fallback: если нет instanceId, удаляем первый найденный
       const index = STATE.level3CaughtClothes.findIndex(c => c.id === id);
       if(index >= 0) {
         STATE.level3CaughtClothes.splice(index, 1);
@@ -816,16 +719,13 @@ function wearCloth(id, dollEl=null, instanceId=null){
 }
 
 function removeClothFromInventory(id){
-  // remove first matching cloth from UI
   const el = clothesArea.querySelector(`.cloth[data-id="${id}"]`);
   if(el) el.remove();
 }
 
 function addClothToInventory(cloth){
-  // добавляем одежду обратно в инвентарь
   const card = document.createElement('div');
   card.className = 'cloth';
-  // Отключаем drag на уровне 3 этап 1
   card.draggable = !(STATE.level === 3 && STATE.level3Stage === 1);
   card.dataset.id = cloth.id;
   card.innerHTML = `
@@ -845,7 +745,6 @@ function addClothToInventory(cloth){
   card.style.position = 'relative';
   card.appendChild(img);
   
-  // drag handlers
   card.addEventListener('dragstart', (e)=>{
     e.dataTransfer.setData('text/plain', cloth.id);
     setTimeout(()=>card.classList.add('dragging'), 10);
@@ -853,14 +752,12 @@ function addClothToInventory(cloth){
   card.addEventListener('dragend', ()=>card.classList.remove('dragging'));
   clothesArea.appendChild(card);
   
-  // Анимация появления
   card.style.transform = 'scale(0)';
   card.style.transition = 'transform 0.3s ease-out';
   setTimeout(() => {
     card.style.transform = 'scale(1)';
   }, 10);
   
-  // Включаем анимацию плавания если нужно
   if(STATE.level === 2 || STATE.level === 3) {
     const index = clothesArea.querySelectorAll('.cloth').length - 1;
     card.animate([
@@ -877,7 +774,6 @@ function redrawDollClothes(doll) {
     return;
   }
   
-  // Определяем правильный слой в зависимости от типа одежды
   const getLayerForType = (type) => {
     if(type === 'hat') return doll.el.querySelector('[data-layer="hat"]');
     if(type === 'top' || type === 'outer' || type === 'dress') return doll.el.querySelector('[data-layer="top"]');
@@ -886,7 +782,6 @@ function redrawDollClothes(doll) {
     return doll.el.querySelector('[data-layer="clothes"]'); // fallback
   };
 
-  // Очищаем все слои
   const layers = doll.el.querySelectorAll('[data-layer]');
   if(!layers || layers.length === 0) {
     console.warn('No layers found for doll');
@@ -898,7 +793,7 @@ function redrawDollClothes(doll) {
   });
 
   if(!doll.worn || doll.worn.length === 0) {
-    return; // Нет одежды для отображения
+    return;
   }
 
   doll.worn.forEach((cloth, index) => {
@@ -913,7 +808,7 @@ function redrawDollClothes(doll) {
     const img = document.createElement('img');
     img.src = cloth.file || 'assets/skirt.png';
     img.alt = cloth.id || 'cloth';
-    img.dataset.clothId = cloth.id; // Добавляем ID одежды для определения при клике
+    img.dataset.clothId = cloth.id;
 
     img.style.position = 'absolute';
     img.style.top = '0';
@@ -925,7 +820,6 @@ function redrawDollClothes(doll) {
     img.style.zIndex = String(10 + index);
     img.style.display = 'block';
 
-    // Дополнительная корректировка для обуви: смещаем ближе к низу и делаем компактнее
     if (cloth.type === 'shoes') {
       img.style.top = '40%';
       img.style.height = '60%';
@@ -942,7 +836,6 @@ function redrawDollClothes(doll) {
     if (cloth.height)
       layer.style.height = cloth.height;
 
-    // Обработка ошибок загрузки изображения
     img.onerror = function() {
       console.warn('Failed to load cloth image:', cloth.file);
       const fallback = document.createElement('div');
@@ -957,12 +850,11 @@ function redrawDollClothes(doll) {
       fallback.style.fontSize = '12px';
       fallback.style.zIndex = String(10 + index);
       fallback.textContent = cloth.type || 'item';
-      fallback.dataset.clothId = cloth.id; // Добавляем ID также к fallback
+      fallback.dataset.clothId = cloth.id;
       layer.appendChild(fallback);
       img.remove();
     };
 
-    // Обработка успешной загрузки
     img.onload = function() {
       console.log('Cloth image loaded successfully:', cloth.file, 'on layer:', cloth.type);
     };
@@ -974,45 +866,38 @@ function redrawDollClothes(doll) {
 }
 
 
-// ---- Falling clothes (level3) ----
 let fallingInterval = null;
-let fallingAnimations = []; // храним все анимации падающих элементов
-let keyboardHandler = null; // храним обработчик клавиатуры
+let fallingAnimations = [];
+let keyboardHandler = null;
 
 function disableFallingClothes(){
   if(fallingInterval) {
     clearInterval(fallingInterval);
     fallingInterval = null;
   }
-  // очищаем все анимации падающих элементов
   fallingAnimations.forEach(anim => clearInterval(anim));
   fallingAnimations = [];
-  // удаляем все падающие элементы
   $all('.cloth.falling').forEach(el => el.remove());
 }
 
 function enableFallingClothes(){
-  disableFallingClothes(); // очищаем предыдущие, если есть
+  disableFallingClothes();
   if(STATE.level !== 3 || STATE.level3Stage !== 1) return;
+
+  let isLevel3stage2started = false;
   
-  const maxCaught = STATE.level3TotalClothes || 15; // Ровно столько надо поймать
+  const maxCaught = STATE.level3TotalClothes || 15;
   
-  // create falling items periodically
   fallingInterval = setInterval(()=>{
-    // Проверяем, поймано ли уже достаточно одежды
     if(STATE.level3CaughtClothes.length >= maxCaught) {
-      // Завершаем этап ловли
       clearInterval(fallingInterval);
       fallingInterval = null;
       return;
     }
     
-    // Смешиваем нужную и случайную одежду
     const neededClothes = getNeededClothesForLevel3();
     let c;
-    // Гарантируем что нужная одежда будет падать достаточно часто
     if((Math.random() < 0.7) && neededClothes.length > 0) {
-      // 70% шанс что упадет нужная одежда
       c = neededClothes[Math.floor(Math.random() * neededClothes.length)];
     } else {
       c = CLOTHES[Math.floor(Math.random()*CLOTHES.length)];
@@ -1028,7 +913,6 @@ function enableFallingClothes(){
     el.dataset.season = c.season;
     el.dataset.color = c.color;
     el.dataset.type = c.type;
-    // Создаем уникальный идентификатор для каждого экземпляра одежды
     el.dataset.instanceId = `${c.id}_${Date.now()}_${Math.random()}`;
     el.textContent = `${c.type}\n${c.season} ${c.color}`;
     el.style.background = '#fff';
@@ -1039,35 +923,28 @@ function enableFallingClothes(){
     el.style.textAlign = 'center';
     dollsArea.appendChild(el);
 
-    // animate
     const speed = 2 + Math.random()*2;
     const t = setInterval(()=>{
       const top = parseFloat(el.style.top);
       el.style.top = (top + speed) + 'px';
       
-      // collision with basket (level 3 stage 1)
-      // Если уже набрано 15, не ловим больше
       if(STATE.level === 3 && STATE.level3Stage === 1 && !el.dataset.caught && STATE.level3CaughtClothes.length < 15) {
         const basket = document.querySelector('.basket');
         if(basket) {
           const r1 = el.getBoundingClientRect();
           const r2 = basket.getBoundingClientRect();
-          // Более точная проверка столкновения
           const isColliding = !(r1.right < r2.left || r1.left > r2.right || r1.bottom < r2.top || r1.top > r2.bottom);
           
           if(isColliding){
-            // Помечаем как пойманную СРАЗУ, чтобы избежать повторных срабатываний
             el.dataset.caught = 'true';
             
-            // Останавливаем анимацию падения
             clearInterval(t);
             fallingAnimations = fallingAnimations.filter(a => a !== t);
             
-            // поймали одежду
             const originalCloth = CLOTHES.find(cl => cl.id === el.dataset.id);
             const clothData = {
               id: el.dataset.id,
-              instanceId: el.dataset.instanceId, // Используем уникальный ID экземпляра
+              instanceId: el.dataset.instanceId,
               season: el.dataset.season,
               color: el.dataset.color,
               type: el.dataset.type,
@@ -1076,12 +953,10 @@ function enableFallingClothes(){
               left: originalCloth.left,
               width: originalCloth.width,
               height: originalCloth.height,
-              // Определяем для какой куклы эта одежда
               targetDollIndex: getTargetDollIndexForCloth(el.dataset.season, el.dataset.color)
             };
             STATE.level3CaughtClothes.push(clothData);
             
-            // Обновляем счётчик (новый ID)
             const counter = document.getElementById('level3-counter-permanent');
             if(counter) {
               counter.textContent = `Поймано: ${STATE.level3CaughtClothes.length}/15`;
@@ -1090,16 +965,17 @@ function enableFallingClothes(){
               }
             }
             
-            // Анимация попадания в корзинку
             const basketRect = basket.getBoundingClientRect();
             animateClothToDoll(el, basketRect, () => {
               el.remove();
               showFeedback('ok', `Поймано: ${clothData.type}`);
               
-              // Если набрали 15 предметов, сразу заканчиваем этап ловли
               if(STATE.level3CaughtClothes.length == 15) {
                 setTimeout(() => {
-                  startLevel3Stage2();
+                  if (!isLevel3stage2started) {
+                    startLevel3Stage2();
+                    isLevel3stage2started = true;
+                  }
                 }, 500);
               }
             });
@@ -1108,13 +984,11 @@ function enableFallingClothes(){
         }
       }
       
-      // collision with dolls (level 3 stage 2)
       if(STATE.level === 3 && STATE.level3Stage === 2) {
         STATE.dolls.forEach(doll=>{
           const r1 = el.getBoundingClientRect();
           const r2 = doll.el.getBoundingClientRect();
           if(!(r1.right < r2.left || r1.left > r2.right || r1.bottom < r2.top || r1.top > r2.bottom)){
-            // collision -> auto wear
             wearCloth(el.dataset.id, doll.el, el.dataset.instanceId);
             el.remove();
             clearInterval(t);
@@ -1123,7 +997,6 @@ function enableFallingClothes(){
         });
       }
       
-      // remove when out of bounds
       if(parseFloat(el.style.top) > dollsArea.clientHeight + 100){ 
         el.remove(); 
         clearInterval(t);
@@ -1158,27 +1031,22 @@ function renderBasket(){
 
 function startLevel3Stage2(){
   STATE.level3Stage = 2;
-  // Удаляем корзинку и инструкцию
   const basket = document.querySelector('.basket');
   if(basket) basket.remove();
   const instruction = document.getElementById('level3-instruction');
   if(instruction) instruction.remove();
   
-  // Останавливаем падение одежды
   disableFallingClothes();
   
-  // Анимация перепрыгивания одежды
   const caughtClothes = STATE.level3CaughtClothes;
   console.log(STATE.level3CaughtClothes.length);
   clothesArea.innerHTML = '';
   
-  // Анимируем переход одежды из корзинки в область выбора
   const basketEl = document.querySelector('.basket');
   const basketRect = basketEl ? basketEl.getBoundingClientRect() : null;
   
   caughtClothes.forEach((cloth, idx) => {
     setTimeout(() => {
-      // Создаем временный элемент для анимации
       const tempEl = document.createElement('div');
       tempEl.className = 'cloth';
       tempEl.style.position = 'fixed';
@@ -1198,7 +1066,6 @@ function startLevel3Stage2(){
       tempEl.textContent = cloth.type;
       document.body.appendChild(tempEl);
       
-      // Анимация перелета
       const clothesAreaRect = clothesArea.getBoundingClientRect();
       requestAnimationFrame(() => {
         tempEl.style.transition = 'all 0.6s cubic-bezier(0.34, 1.56, 0.64, 1)';
@@ -1215,18 +1082,14 @@ function startLevel3Stage2(){
     }, idx * 150);
   });
   
-  // Появляются 3 куклы
   setTimeout(() => {
     renderDolls(3);
-    // Включаем drag and drop для одевания кукол
     enableDragAndDrop();
     showFeedback('ok', 'Теперь оденьте кукол!');
-    // Запускаем таймер для этапа 2 (одевания)
     startTimer();
   }, caughtClothes.length * 100 + 500);
 }
 
-// ---- Keyboard controls (level3) ----
 function disableKeyboardControls(){
   if(keyboardHandler) {
     document.removeEventListener('keydown', keyboardHandler);
@@ -1235,7 +1098,7 @@ function disableKeyboardControls(){
 }
 
 function enableKeyboardControls(){
-  disableKeyboardControls(); // удаляем предыдущий обработчик, если есть
+  disableKeyboardControls();
   keyboardHandler = onKeyNav;
   document.addEventListener('keydown', keyboardHandler);
 }
@@ -1247,7 +1110,6 @@ function onKeyNav(e){
     e.preventDefault();
   }
   
-  // Этап 1: управление корзинкой
   if(STATE.level3Stage === 1) {
     const basket = document.querySelector('.basket');
     if(!basket) return;
@@ -1262,7 +1124,6 @@ function onKeyNav(e){
     return;
   }
   
-  // Этап 2: управление куклами
   if(STATE.level3Stage === 2) {
     if(e.code==='ArrowLeft'){
       focusPrevDoll();
@@ -1280,14 +1141,11 @@ function onKeyNav(e){
 function focusPrevDoll(){ const idx = STATE.dolls.findIndex(d=>d.el.classList.contains('focus')); if(idx<0) { STATE.dolls[0].el.classList.add('focus'); return } STATE.dolls[idx].el.classList.remove('focus'); const prev = (idx-1+STATE.dolls.length)%STATE.dolls.length; STATE.dolls[prev].el.classList.add('focus'); }
 function focusNextDoll(){ const idx = STATE.dolls.findIndex(d=>d.el.classList.contains('focus')); if(idx<0) { STATE.dolls[0].el.classList.add('focus'); return } STATE.dolls[idx].el.classList.remove('focus'); const next = (idx+1)%STATE.dolls.length; STATE.dolls[next].el.classList.add('focus'); }
 
-// ---- Evaluate attempts ----
 function evaluateAttempt(cloth, doll){
-  // decide correctness according to task
   let correct=false;
   if(STATE.task.type==='season'){
     correct = cloth.season === STATE.task.season;
   } else if(STATE.task.type==='seasonColor'){
-    // На уровне 2 проверяем для конкретной куклы
     const dollIndex = STATE.dolls.indexOf(doll);
     if(STATE.task.parts && STATE.task.parts[dollIndex] && STATE.task.parts[dollIndex] !== null) {
       const taskPart = STATE.task.parts[dollIndex];
@@ -1296,7 +1154,6 @@ function evaluateAttempt(cloth, doll){
       correct = false;
     }
   } else if(STATE.task.type==='multi'){
-    // Проверяем, подходит ли одежда конкретной кукле
     const dollIndex = STATE.dolls.indexOf(doll);
     if(dollIndex >= 0 && STATE.task.parts[dollIndex]) {
       const taskPart = STATE.task.parts[dollIndex];
@@ -1306,10 +1163,8 @@ function evaluateAttempt(cloth, doll){
     }
   }
   
-  // На уровне 2: правильная одежда - очки только 1 раз, неправильная - штраф каждый раз
   if(STATE.level === 2) {
     if(correct) {
-      // Добавляем очки только если эта вещь еще не приносила очки
       if(!doll.correctIds.has(cloth.id)) {
         addScore(10);
         doll.correctIds.add(cloth.id);
@@ -1318,12 +1173,10 @@ function evaluateAttempt(cloth, doll){
         showFeedback('ok', 'Уже учтено');
       }
     } else {
-      // Неправильная одежда - штраф каждый раз
       applyPenalty('wrong');
       showFeedback('bad','Неправильно −5');
     }
   } else {
-    // На других уровнях старая логика
     if(correct){
       addScore(10);
       showFeedback('ok', 'Правильно! +10');
@@ -1334,10 +1187,9 @@ function evaluateAttempt(cloth, doll){
   }
   updateUI();
   
-  return correct; // Возвращаем результат для анимации
+  return correct;
 }
 
-// ---- Анимации ----
 function animateClothToDoll(clothCard, dollRect, callback) {
   const cardRect = clothCard.getBoundingClientRect();
   const clone = clothCard.cloneNode(true);
@@ -1351,7 +1203,6 @@ function animateClothToDoll(clothCard, dollRect, callback) {
   clone.style.transition = 'none';
   document.body.appendChild(clone);
   
-  // Более плавная анимация полета
   requestAnimationFrame(() => {
     clone.style.transition = 'all 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94)';
     clone.style.left = (dollRect.left + dollRect.width / 2) + 'px';
@@ -1368,12 +1219,10 @@ function animateClothToDoll(clothCard, dollRect, callback) {
 
 function animateDollResult(dollEl, isCorrect) {
   if(isCorrect) {
-    // Более плавная анимация успеха
     dollEl.style.transition = 'all 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94)';
     dollEl.style.transform = 'scale(1.05)';
     dollEl.style.boxShadow = '0 0 30px rgba(76, 175, 80, 0.6)';
     
-    // Эффект звездочек
     createSparkles(dollEl, true);
     
     setTimeout(() => {
@@ -1382,11 +1231,9 @@ function animateDollResult(dollEl, isCorrect) {
       dollEl.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.04)';
     }, 500);
   } else {
-    // Более плавная анимация ошибки
     dollEl.style.transition = 'all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94)';
     dollEl.style.animation = 'shake 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94)';
     
-    // Эффект красного свечения
     createSparkles(dollEl, false);
     
     setTimeout(() => {
@@ -1430,9 +1277,7 @@ function createSparkles(element, isSuccess) {
   }
 }
 
-// ---- Level Descriptions ----
 function showLevelDescription(level) {
-  // Удаляем предыдущее описание если есть
   const existing = document.getElementById('level-description');
   if(existing) existing.remove();
   
@@ -1505,7 +1350,6 @@ function showLevelDescription(level) {
   
   document.body.appendChild(descEl);
   
-  // Анимация появления
   descEl.style.opacity = '0';
   descEl.style.transform = 'translate(-50%, -50%) scale(0.9)';
   requestAnimationFrame(() => {
@@ -1514,9 +1358,8 @@ function showLevelDescription(level) {
     descEl.style.transform = 'translate(-50%, -50%) scale(1)';
   });
   
-  // Обработчик закрытия - уровень не начинается пока не закрыта подсказка
-  STATE.running = false; // Останавливаем игру пока подсказка открыта
-  stopTimer(); // Останавливаем таймер если он был запущен
+  STATE.running = false;
+  stopTimer();
   
   const closeBtn = descEl.querySelector('#close-description');
   const closeDescription = () => {
@@ -1525,7 +1368,6 @@ function showLevelDescription(level) {
     descEl.style.transform = 'translate(-50%, -50%) scale(0.9)';
     setTimeout(() => {
       descEl.remove();
-      // Запускаем уровень после закрытия подсказки
       STATE.running = true;
       startTimer();
       if(level === 3){
@@ -1573,7 +1415,6 @@ function animateClothToInventory(clothElement, targetRect, callback) {
   });
 }
 
-// ---- Scoring ----
 function addScore(n){ STATE.score += n; }
 function applyPenalty(reason){
   if(reason==='wrong'){ STATE.score -= 5; STATE.timer = Math.max(0, STATE.timer - 2); }
@@ -1588,10 +1429,8 @@ function updateUI(){
   nameDisplay.textContent = STATE.player;
 }
 
-// ---- Timer ----
 function startTimer(){
   stopTimer();
-  // На этапе 1 уровня 3 таймер не запускается
   if(STATE.level === 3 && STATE.level3Stage === 1) {
     return;
   }
@@ -1608,22 +1447,16 @@ function startTimer(){
 function stopTimer(){ if(STATE.intervalId) clearInterval(STATE.intervalId); STATE.intervalId = null; }
 
 function finishLevel(timeUp=false){
-  // basic evaluation: if multi-level, more complex logic
   stopTimer();
-  // evaluation for multi
   let success = false;
   if(STATE.level===1){
-    // Для уровня 1 достаточно просто попробовать
-    success = STATE.score >= 0; // всегда успех для тестирования
+    success = STATE.score >= 0;
   } else if(STATE.level===2){
-    // Для уровня 2 нужно надеть хотя бы одну правильную вещь
-    success = STATE.score >= 0; // всегда успех для тестирования
+    success = STATE.score >= 0;
   } else if(STATE.level===3){
-    // Для уровня 3 нужно поймать хотя бы одну вещь и одеть кукол
     success = STATE.level3CaughtClothes.length > 0 || STATE.score >= 0;
   }
   if(timeUp && STATE.level < 3) {
-    // Если время вышло, но не на последнем уровне, все равно переходим
     success = true;
   }
   if(success){
@@ -1638,7 +1471,6 @@ function finishLevel(timeUp=false){
   }
 }
 
-// ---- Finish game ----
 function finishGame(){
   STATE.running = false;
   stopTimer();
@@ -1647,21 +1479,17 @@ function finishGame(){
   showScreen('scoreboard');
 }
 
-// ---- Save results ----
 function saveResult(){
   const rec = { name: STATE.player, score: STATE.score, date: new Date().toISOString(), level: STATE.level };
   const arr = JSON.parse(localStorage.getItem(SCORES_KEY) || '[]');
   
-  // Ищем, есть ли уже рекорд для этого игрока
   const existingIndex = arr.findIndex(r => r.name.toLowerCase() === STATE.player.toLowerCase());
   
   if(existingIndex >= 0) {
-    // Если есть, обновляем только если новый результат лучше
     if(STATE.score > arr[existingIndex].score) {
       arr[existingIndex] = rec;
     }
   } else {
-    // Если нет, добавляем новый рекорд
     arr.push(rec);
   }
   
@@ -1669,7 +1497,6 @@ function saveResult(){
   localStorage.setItem(SCORES_KEY, JSON.stringify(arr.slice(0,100)));
 }
 
-// ---- Render scoreboard ----
 function renderScores(){
   const arr = JSON.parse(localStorage.getItem(SCORES_KEY) || '[]');
   scoresList.innerHTML = '';
@@ -1688,9 +1515,7 @@ function renderScores(){
   });
 }
 
-// ---- Feedback ---
 function showFeedback(type, text){
-  // small toast
   const t = document.createElement('div');
   t.textContent = text;
   t.style.position='fixed';t.style.right='20px';t.style.bottom='20px';t.style.background= type==='ok' ? '#dff2e1' : '#ffe6e6';
@@ -1699,10 +1524,8 @@ function showFeedback(type, text){
   setTimeout(()=>t.remove(),1500);
 }
 
-// ---- Save composition as PNG (simple approach) ----
 function saveCompositionAsPNG(){
   try {
-    // Берём все видимые куклы
     const dollEls = Array.from(dollsArea.querySelectorAll('.doll'));
     
     if(dollEls.length === 0) {
@@ -1710,7 +1533,6 @@ function saveCompositionAsPNG(){
       return;
     }
     
-    // Используем html2canvas если доступен, иначе используем встроенный метод
     if(typeof html2canvas !== 'undefined') {
       html2canvas(dollsArea, { 
         scale: 2,
@@ -1736,7 +1558,6 @@ function saveCompositionAsPNG(){
     }
     
     function fallbackSaveMethod() {
-      // Резервный метод - создаём новый SVG с путями к изображениям
       const canvas = document.createElement('canvas');
       const padding = 40;
       const dollWidth = 240;
@@ -1754,7 +1575,6 @@ function saveCompositionAsPNG(){
       ctx.strokeStyle = '#ddd';
       ctx.lineWidth = 1;
       
-      // Рисуем границы для кукол
       for(let i = 0; i < cols; i++) {
         for(let j = 0; j < rows; j++) {
           const x = padding + i * dollWidth;
@@ -1763,7 +1583,6 @@ function saveCompositionAsPNG(){
         }
       }
       
-      // Добавляем текст для каждой куклы
       ctx.fillStyle = '#666';
       ctx.font = '14px Arial';
       ctx.textAlign = 'center';
@@ -1786,7 +1605,6 @@ function saveCompositionAsPNG(){
         }
       });
       
-      // Сохраняем
       const url = canvas.toDataURL('image/png');
       const a = document.createElement('a');
       a.href = url;
@@ -1802,13 +1620,11 @@ function saveCompositionAsPNG(){
   }
 }
 
-// ---- Inventory modifications (helpers) ----
 function removeClothFromUI(id){
   const el = clothesArea.querySelector(`.cloth[data-id="${id}"]`);
   if(el) el.remove();
 }
 
-// ---- enable animations for clothes (level2) ----
 function enableAnimationsForClothes(){
   const items = clothesArea.querySelectorAll('.cloth');
   items.forEach((el,i)=>{
@@ -1816,7 +1632,6 @@ function enableAnimationsForClothes(){
   });
 }
 
-// ---- Utility to enable drag on dynamic items after render ----
 function enableDragAfterRender(){
   $all('.cloth').forEach(card=>{
     card.addEventListener('dragstart', (e)=>{
@@ -1827,13 +1642,10 @@ function enableDragAfterRender(){
   });
 }
 
-// Start basic DnD enable every time clothes rendered
 const mo = new MutationObserver(()=>enableDragAfterRender());
 mo.observe(clothesArea, {childList:true, subtree:true});
 
-// ---- initial render handlers ----
-function attachHandlers(){ /* nothing more here */ }
+function attachHandlers(){ }
 
-// expose some functions for debugging
 window._GAME = { STATE, startGame, nextLevel, finishLevel };
 
