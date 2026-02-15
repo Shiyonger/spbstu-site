@@ -25,13 +25,13 @@ const DOLLS = [
 
 const CLOTHES = [
   // Зима
-  {id:'c1',file:'assets/clothes/winter_blue_outer.png',type:'outer',season:'winter',color:'blue',style:'classic',top:'13%',left:'24.5%',width:'50%',height:'45%'},
-  {id:'c2',file:'assets/clothes/winter_brown_hat.png',type:'hat',season:'winter',color:'red',style:'casual',top:'-1%',left:'-1.5%',width:'100%',height:'20%'},
-  {id:'c3',file:'assets/clothes/blue_bottom.png',type:'bottom',season:'winter',color:'blue',style:'casual',top:'37%',left:'0.5%',width:'100%',height:'50%'},
-  {id:'c4',file:'assets/clothes/winter_top_blue.png',type:'top',season:'winter',color:'blue',style:'classic',top:'20%',left:'0',width:'100%',height:'27%'},
-  {id:'c6',file:'assets/clothes/winter_top_green.png',type:'top',season:'winter',color:'green',style:'classic',top:'22%',left:'0',width:'100%',height:'27%'},
-  {id:'c7',file:'assets/clothes/winter_top_red.png',type:'top',season:'winter',color:'red',style:'classic',top:'22%',left:'0',width:'100%',height:'27%'},
-  {id:'c5',file:'assets/clothes/winter_brown_shoes.png',type:'shoes',season:'winter',color:'brown',style:'sport',top:'70%',left:'1%',width:'100%',height:'26%'},
+  {id:'c1',file:'assets/clothes/winter_blue_outer.png',type:'outer',season:'winter',color:'blue',style:'classic',top:'20%',left:'27%',width:'45%',height:'30%'},
+  {id:'c2',file:'assets/clothes/winter_brown_hat.png',type:'hat',season:'winter',color:'red',style:'casual',top:'-2%',left:'37%',width:'22%',height:'20%'},
+  {id:'c3',file:'assets/clothes/blue_bottom.png',type:'bottom',season:'winter',color:'blue',style:'casual',top:'37%',left:'34.5%',width:'30%',height:'50%'},
+  {id:'c4',file:'assets/clothes/winter_top_blue.png',type:'top',season:'winter',color:'blue',style:'classic',top:'20%',left:'25%',width:'50%',height:'27%'},
+  {id:'c6',file:'assets/clothes/winter_top_green.png',type:'top',season:'winter',color:'green',style:'classic',top:'22%',left:'25%',width:'50%',height:'27%'},
+  {id:'c7',file:'assets/clothes/winter_top_red.png',type:'top',season:'winter',color:'red',style:'classic',top:'22%',left:'25%',width:'50%',height:'27%'},
+  {id:'c5',file:'assets/clothes/winter_brown_shoes.png',type:'shoes',season:'winter',color:'brown',style:'sport',top:'70%',left:'31%',width:'40%',height:'26%'},
   // {id:'c6',file:'assets/skirt.png',type:'hat',season:'winter',color:'green',style:'casual'},
   // {id:'c7',file:'assets/skirt.png',type:'outer',season:'winter',color:'yellow',style:'classic'},
   // {id:'c8',file:'assets/skirt.png',type:'bottom',season:'winter',color:'purple',style:'casual'},
@@ -42,10 +42,10 @@ const CLOTHES = [
   // {id:'c29',file:'assets/skirt.png',type:'outer',season:'winter',color:'brown',style:'classic'},
   
   // Лето
-  {id:'c9',file:'assets/clothes/summer_blue_hat.png',type:'hat',season:'summer',color:'blue',style:'classic',top:'1%',left:'-0.5%',width:'100%',height:'12%'},
-  {id:'c10',file:'assets/clothes/summer_purple_top_3.png',type:'top',season:'summer',color:'purple',style:'sport',top:'22%',left:'-0.5%',width:'100%',height:'29%'},
+  {id:'c9',file:'assets/clothes/summer_blue_hat.png',type:'hat',season:'summer',color:'blue',style:'classic',top:'1%',left:'33%',width:'30%',height:'12%'},
+  {id:'c10',file:'assets/clothes/summer_purple_top_3.png',type:'top',season:'summer',color:'purple',style:'sport',top:'22%',left:'29%',width:'40%',height:'29%'},
   {id:'c11',file:'assets/clothes/summer_blue_bottom_2.png',type:'bottom',season:'summer',color:'blue',style:'casual',top:'38%',left:'34.5%',width:'30%',height:'30%'},
-  {id:'c12',file:'assets/skirt.png',type:'bottom',season:'summer',color:'green',style:'casual',top:'30%',left:'29.5%',width:'40%',height:'30%'},
+  {id:'c12',file:'assets/skirt.png',type:'bottom',season:'summer',color:'green',style:'casual',top:'35%',left:'29.5%',width:'40%',height:'20%'},
   {id:'c13',file:'assets/clothes/summer_pink_shoes.png',type:'shoes',season:'summer',color:'brown',style:'casual',top:'84%',left:'36%',width:'30%',height:'13%'},
 ];
 
@@ -492,7 +492,7 @@ function renderDolls(count=1){
     
     wrapper.innerHTML = `
       ${taskHint}
-      <img src="${d.file}" alt="${d.name}" style="max-width:90%;max-height:90%;opacity:0.95" draggable="false" />
+      <img crossOrigin="anonymous" src="${d.file}" alt="${d.name}" style="max-width:90%;max-height:90%;opacity:0.95" draggable="false" />
       <div class="layer" data-layer="clothes" style="pointer-events:auto;position:absolute;top:0;left:0;width:100%;height:100%;z-index:10;cursor:pointer;"></div>
       <div class="layer" data-layer="hat" style="pointer-events:auto;position:absolute;top:0;left:0;width:100%;height:30%;z-index:11;cursor:pointer;"></div>
       <div class="layer" data-layer="top" style="pointer-events:auto;position:absolute;top:20%;left:0;width:100%;height:50%;z-index:13;cursor:pointer;"></div>
@@ -806,6 +806,7 @@ function redrawDollClothes(doll) {
     }
 
     const img = document.createElement('img');
+    img.crossOrigin = 'anonymous';
     img.src = cloth.file || 'assets/skirt.png';
     img.alt = cloth.id || 'cloth';
     img.dataset.clothId = cloth.id;
@@ -1524,7 +1525,9 @@ function showFeedback(type, text){
   setTimeout(()=>t.remove(),1500);
 }
 
-function saveCompositionAsPNG(){
+
+async function saveCompositionAsPNG(){
+  // sanitize maybe
   try {
     const dollEls = Array.from(dollsArea.querySelectorAll('.doll'));
     
@@ -1533,12 +1536,16 @@ function saveCompositionAsPNG(){
       return;
     }
     
+    const rect = dollsArea.getBoundingClientRect();
+    
     if(typeof html2canvas !== 'undefined') {
       html2canvas(dollsArea, { 
         scale: 2,
+        width: rect.width,
+        height: rect.height,
         backgroundColor: '#f7f6fb',
         allowTaint: true,
-        useCORS: false,
+        useCORS: true,
         logging: false
       }).then(canvas => {
         const url = canvas.toDataURL('image/png');
