@@ -1,9 +1,0 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="400" height="800" viewBox="0 0 400 800">
-  <rect width="100%" height="100%" fill="#fff"/>
-  <g>
-    <circle cx="200" cy="120" r="80" fill="#ffd1dc" stroke="#eaa" />
-    <rect x="140" y="220" width="120" height="260" fill="#f4f4ff" stroke="#ddd"/>
-    <text x="200" y="420" font-size="28" text-anchor="middle" fill="#888">Кукла 1</text>
-    <text x="200" y="460" font-size="18" text-anchor="middle" fill="#aaa">placeholder</text>
-  </g>
-</svg>
